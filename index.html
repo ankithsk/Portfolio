@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <!-- <link rel="icon" type="image/svg+xml" href="/" /> -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ankith Katageri — Software & AI Engineer</title>
+  <!-- Preload DRACO decoder so it's ready before the GLB starts parsing -->
+  <link rel="preload" href="/draco/draco_decoder.wasm" as="fetch" type="application/wasm" crossorigin />
+  <link rel="preload" href="/draco/draco_decoder.js" as="script" />
+  <!-- Preload the avatar model itself -->
+  <link rel="preload" href="/models/avatar.glb" as="fetch" type="model/gltf-binary" crossorigin />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

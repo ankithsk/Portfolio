@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { useRef, useMemo, useState, useEffect } from "react";
+import { useRef, useMemo, useState, useEffect, useCallback } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import { EffectComposer, N8AO } from "@react-three/postprocessing";
@@ -47,20 +47,43 @@ function SphereGeo({
   isActive,
 }: SphereProps) {
   const api = useRef<RapierRigidBody | null>(null);
+  const easterEggBurst = useRef(false);
+
+  useEffect(() => {
+    const onBurst = () => {
+      easterEggBurst.current = true;
+      setTimeout(() => {
+        easterEggBurst.current = false;
+      }, 2000);
+    };
+    window.addEventListener("techstack-easter-egg", onBurst);
+    return () => window.removeEventListener("techstack-easter-egg", onBurst);
+  }, []);
 
   useFrame((_state, delta) => {
     if (!isActive) return;
     delta = Math.min(0.1, delta);
+    // Easter egg: massive chaotic burst
+    const burstMultiplier = easterEggBurst.current ? 8 : 1;
     const impulse = vec
       .copy(api.current!.translation())
       .normalize()
       .multiply(
         new THREE.Vector3(
-          -50 * delta * scale,
-          -150 * delta * scale,
-          -50 * delta * scale
+          -50 * delta * scale * burstMultiplier,
+          -150 * delta * scale * burstMultiplier,
+          -50 * delta * scale * burstMultiplier
         )
       );
+    if (easterEggBurst.current) {
+      // Add random spin for chaos
+      const randomTorque = new THREE.Vector3(
+        (Math.random() - 0.5) * 200 * delta,
+        (Math.random() - 0.5) * 200 * delta,
+        (Math.random() - 0.5) * 200 * delta
+      );
+      api.current?.applyTorqueImpulse(randomTorque, true);
+    }
     api.current?.applyImpulse(impulse, true);
   });
 
@@ -124,8 +147,11 @@ function Pointer({ vec = new THREE.Vector3(), isActive }: PointerProps) {
   );
 }
 
+import { getEnvironmentMood } from "../hooks/useEnvironmentMood";
+
 const TechStack = () => {
   const [isActive, setIsActive] = useState(false);
+  const mood = getEnvironmentMood();
 
   useEffect(() => {
     // PERF: Use IntersectionObserver instead of scroll listener
@@ -181,16 +207,16 @@ const TechStack = () => {
         // PERF: Only render when visible (frameloop demand)
         frameloop={isActive ? "always" : "never"}
       >
-        <ambientLight intensity={1} />
+        <ambientLight intensity={mood.ambientIntensity * 1.5} color={mood.ambientColor} />
         <spotLight
           position={[20, 20, 25]}
           penumbra={1}
           angle={0.2}
-          color="white"
+          color={mood.directionalColor}
           castShadow
           shadow-mapSize={[256, 256]}
         />
-        <directionalLight position={[0, 5, -4]} intensity={2} />
+        <directionalLight position={[0, 5, -4]} intensity={mood.directionalIntensity * 2} />
         <Physics gravity={[0, 0, 0]} paused={!isActive}>
           <Pointer isActive={isActive} />
           {spheres.map((props, i) => (

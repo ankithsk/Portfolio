@@ -2,20 +2,26 @@ import { useEffect, useState } from "react";
 import "./styles/Loading.css";
 import { useLoading } from "../context/LoadingProvider";
 import Marquee from "react-fast-marquee";
+import { getVisitorMemory } from "../hooks/useVisitorMemory";
 
 const Loading = ({ percent }: { percent: number }) => {
   const { setIsLoading } = useLoading();
   const [loaded, setLoaded] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [clicked, setClicked] = useState(false);
+  const visitor = getVisitorMemory();
+
+  // Returning visitors get snappier loading transitions
+  const loadDelay = visitor.isReturning ? 200 : 600;
+  const readyDelay = visitor.isReturning ? 400 : 1000;
 
   if (percent >= 100) {
     setTimeout(() => {
       setLoaded(true);
       setTimeout(() => {
         setIsLoaded(true);
-      }, 1000);
-    }, 600);
+      }, readyDelay);
+    }, loadDelay);
   }
 
   useEffect(() => {
@@ -80,7 +86,7 @@ const Loading = ({ percent }: { percent: number }) => {
               <div className="loading-box"></div>
             </div>
             <div className="loading-content2">
-              <span>Welcome</span>
+              <span>{visitor.isReturning ? "Welcome back" : "Welcome"}</span>
             </div>
           </div>
         </div>

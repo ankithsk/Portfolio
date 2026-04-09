@@ -1,9 +1,15 @@
 import * as THREE from "three";
 import { RGBELoader } from "three-stdlib";
 import { gsap } from "gsap";
+import { getEnvironmentMood } from "../../../hooks/useEnvironmentMood";
 
 const setLighting = (scene: THREE.Scene) => {
-  const directionalLight = new THREE.DirectionalLight(0x00ff87, 0);
+  const mood = getEnvironmentMood();
+
+  const directionalLight = new THREE.DirectionalLight(
+    new THREE.Color(mood.directionalColor),
+    0
+  );
   directionalLight.intensity = 0;
   directionalLight.position.set(-0.47, -0.32, -1);
   directionalLight.castShadow = true;
@@ -13,7 +19,12 @@ const setLighting = (scene: THREE.Scene) => {
   directionalLight.shadow.camera.far = 50;
   scene.add(directionalLight);
 
-  const pointLight = new THREE.PointLight(0xa855f7, 0, 100, 3);
+  const pointLight = new THREE.PointLight(
+    new THREE.Color(mood.screenEmissiveColor),
+    0,
+    100,
+    3
+  );
   pointLight.position.set(3, 12, 4);
   pointLight.castShadow = true;
   scene.add(pointLight);
@@ -38,12 +49,12 @@ const setLighting = (scene: THREE.Scene) => {
   const ease = "power2.inOut";
   function turnOnLights() {
     gsap.to(scene, {
-      environmentIntensity: 0.64,
+      environmentIntensity: mood.ambientIntensity,
       duration: duration,
       ease: ease,
     });
     gsap.to(directionalLight, {
-      intensity: 1,
+      intensity: mood.directionalIntensity,
       duration: duration,
       ease: ease,
     });

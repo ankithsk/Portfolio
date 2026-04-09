@@ -1,8 +1,12 @@
 import * as THREE from "three";
 import { GLTF } from "three-stdlib";
 import { eyebrowBoneNames, typingBoneNames } from "../../../data/boneData";
+import { getVisitorMemory } from "../../../hooks/useVisitorMemory";
+import { getEnvironmentMood } from "../../../hooks/useEnvironmentMood";
 
 const setAnimations = (gltf: GLTF) => {
+  const visitor = getVisitorMemory();
+  const mood = getEnvironmentMood();
   let character = gltf.scene;
   let mixer = new THREE.AnimationMixer(character);
   if (gltf.animations) {
@@ -13,13 +17,15 @@ const setAnimations = (gltf: GLTF) => {
     introAction.setLoop(THREE.LoopOnce, 1);
     introAction.clampWhenFinished = true;
     introAction.play();
+    // Character energy affects idle animation speed (time-of-day mood)
+    const energy = mood.characterEnergy;
     const clipNames = ["key1", "key2", "key5", "key6"];
     clipNames.forEach((name) => {
       const clip = THREE.AnimationClip.findByName(gltf.animations, name);
       if (clip) {
         const action = mixer?.clipAction(clip);
         action!.play();
-        action!.timeScale = 1.2;
+        action!.timeScale = 1.2 * energy;
       } else {
         console.error(`Animation "${name}" not found`);
       }
@@ -29,7 +35,7 @@ const setAnimations = (gltf: GLTF) => {
     if (typingAction) {
       typingAction.enabled = true;
       typingAction.play();
-      typingAction.timeScale = 1.2;
+      typingAction.timeScale = 1.2 * energy;
     }
   }
   function startIntro() {
@@ -38,11 +44,16 @@ const setAnimations = (gltf: GLTF) => {
     );
     const introAction = mixer.clipAction(introClip!);
     introAction.clampWhenFinished = true;
+    // Returning visitors get a snappier intro
+    if (visitor.isReturning) {
+      introAction.timeScale = 1.8;
+    }
     introAction.reset().play();
+    const blinkDelay = visitor.isReturning ? 1400 : 2500;
     setTimeout(() => {
       const blink = gltf.animations.find((clip) => clip.name === "Blink");
       mixer.clipAction(blink!).play().fadeIn(0.5);
-    }, 2500);
+    }, blinkDelay);
   }
   function hover(gltf: GLTF, hoverDiv: HTMLDivElement) {
     let eyeBrowUpAction = createBoneAction(gltf, mixer, "browup", eyebrowBoneNames);

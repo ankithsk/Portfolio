@@ -1,13 +1,22 @@
 import { SplitText } from "gsap/SplitText";
 import gsap from "gsap";
 import { smoother } from "../Navbar";
+import { getVisitorMemory } from "../../hooks/useVisitorMemory";
+import { getEnvironmentMood } from "../../hooks/useEnvironmentMood";
 
 export function initialFX() {
+  const visitor = getVisitorMemory();
+  const mood = getEnvironmentMood();
+  const stagger = visitor.isReturning ? 0.01 : 0.025;
+
   document.body.style.overflowY = "auto";
   smoother?.paused(false);
   document.getElementsByTagName("main")[0].classList.add("main-active");
+
+  // 4D: Apply time-of-day mood class to body for CSS-driven atmosphere
+  document.body.classList.add(`mood-${mood.timeOfDay}`);
   gsap.to("body", {
-    backgroundColor: "#050510",
+    backgroundColor: mood.bgColor,
     duration: 0.5,
     delay: 1,
   });
@@ -24,11 +33,11 @@ export function initialFX() {
     { opacity: 0, y: 80, filter: "blur(5px)" },
     {
       opacity: 1,
-      duration: 1.2,
+      duration: visitor.isReturning ? 0.8 : 1.2,
       filter: "blur(0px)",
       ease: "power3.inOut",
       y: 0,
-      stagger: 0.025,
+      stagger,
       delay: 0.3,
     }
   );
@@ -41,11 +50,11 @@ export function initialFX() {
     { opacity: 0, y: 80, filter: "blur(5px)" },
     {
       opacity: 1,
-      duration: 1.2,
+      duration: visitor.isReturning ? 0.8 : 1.2,
       filter: "blur(0px)",
       ease: "power3.inOut",
       y: 0,
-      stagger: 0.025,
+      stagger,
       delay: 0.3,
     }
   );

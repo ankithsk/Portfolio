@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { getVisitorMemory } from "../../hooks/useVisitorMemory";
+import { getEnvironmentMood } from "../../hooks/useEnvironmentMood";
 
 // Always register here — GsapScroll owns its own deps
 gsap.registerPlugin(ScrollTrigger);
@@ -9,6 +11,8 @@ export function setCharTimeline(
   character: THREE.Object3D<THREE.Object3DEventMap> | null,
   camera: THREE.PerspectiveCamera
 ) {
+  const visitor = getVisitorMemory();
+  const mood = getEnvironmentMood();
   let intensity: number = 0;
   setInterval(() => {
     intensity = Math.random();
@@ -57,7 +61,7 @@ export function setCharTimeline(
     if (object.name === "screenlight") {
       object.material.transparent = true;
       object.material.opacity = 0;
-      object.material.emissive.set("#a855f7");
+      object.material.emissive.set(mood.screenEmissiveColor);
       gsap.timeline({ repeat: -1, repeatRefresh: true }).to(object.material, {
         emissiveIntensity: () => intensity * 8,
         duration: () => Math.random() * 0.6,
@@ -72,12 +76,14 @@ export function setCharTimeline(
     || character?.getObjectByName("mixamorigNeck");
   if (window.innerWidth > 1024) {
     if (character) {
+      // Returning visitors get a ~30% tighter landing-to-about transition
+      const tl1Scale = visitor.isReturning ? 0.7 : 1;
       tl1
-        .fromTo(character.rotation, { y: 0 }, { y: 0.7, duration: 1 }, 0)
+        .fromTo(character.rotation, { y: 0 }, { y: 0.7, duration: 1 * tl1Scale }, 0)
         .to(camera.position, { z: 22 }, 0)
-        .fromTo(".character-model", { x: 0 }, { x: "-25%", duration: 1 }, 0)
-        .to(".landing-container", { opacity: 0, duration: 0.4 }, 0)
-        .to(".landing-container", { y: "40%", duration: 0.8 }, 0)
+        .fromTo(".character-model", { x: 0 }, { x: "-25%", duration: 1 * tl1Scale }, 0)
+        .to(".landing-container", { opacity: 0, duration: 0.4 * tl1Scale }, 0)
+        .to(".landing-container", { y: "40%", duration: 0.8 * tl1Scale }, 0)
         .fromTo(".about-me", { y: "-50%" }, { y: "0%" }, 0);
 
       tl2
